@@ -1,0 +1,79 @@
+#!/bin/bash
+
+VERSION="1.1.0"
+
+RED='\e[31m'
+GREEN='\e[92m'
+YELLOW='\e[93m'
+FUCHSIA='\e[95m'
+CYAN='\e[96m'
+RESET='\e[0m'
+DIR_PATH=""
+
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+source /home/kali/labs/recon_src/menu_platform.sh
+source /home/kali/labs/recon_src/menu_level.sh
+source /home/kali/labs/recon_src/function_nmap.sh
+
+displayLogo() {
+	clear
+	echo -e "
+${RED}R${RESET}${GREEN}E${RESET}${YELLOW}C${RESET}${FUCHSIA}O${RESET}${CYAN}N${RESET} - ${RED}C${RESET}${GREEN}T${RESET}${YELLOW}F${RESET}s 
+
+${YELLOW}v${VERSION}${RESET} by${FUCHSIA} 0xFF00FF${RESET}
+----------------------------------------------------------
+"
+}
+
+displayMenu() {
+	PLATFORM=$(displaySelectPlatform)
+	LEVEL=$(displaySelectLevel)
+	displayInsertBox
+	displayInsertIP
+	echo -e "Chosen platform is: [$GREEN$PLATFORM$RESET]"
+	echo -e "Chosen level is: [$GREEN$LEVEL$RESET]"
+	echo -e "Chosen box is: [$GREEN$BOX$RESET]"
+	echo -e "Chosen IP is: [$GREEN$VMIP$RESET]"
+	createDirectoriesAndFile
+	echo -e "[$GREEN+$RESET] Done, next."
+	startFunctions
+	echo -e "[$GREEN+$RESET] All functions done."
+}
+
+displayInsertBox() {
+	read -p "Enter boxname: " BOX
+}
+
+displayInsertIP() {
+	read -p "Enter ip: " VMIP
+}
+
+createDirectoriesAndFile() {
+  echo -e "[$GREEN+$RESET] Creating directories"
+	if [ ! -d "$PLATFORM/$LEVEL/$BOX" ]; then
+  	mkdir -p "$PLATFORM/$LEVEL/$BOX"
+  	DIR_PATH="$PLATFORM/$LEVEL/$BOX"
+  	echo "VMIP $VMIP" > "$DIR_PATH/notes.txt"
+  	echo "MYIP $(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)" >> "$DIR_PATH/notes.txt"
+  	echo >> "$DIR_PATH/notes.txt"
+  fi
+}
+
+startFunctions() {
+	startNmap
+}
+
+chmodDirectory() {
+	echo -e "[$GREEN+$RESET] Setting directory/files permissions"
+	chmod -R 777 "$DIR_PATH"
+	echo -e "[$GREEN+$RESET] Done."
+}
+
+
+displayLogo
+displayMenu
+chmodDirectory
